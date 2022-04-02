@@ -2,11 +2,19 @@
 
 URL to the original repository I made: https://github.com/kienmarkdo/Taxi-Geolocation-Clustering-DBSCAN
 
-In this Go version of the comprehensive project, the DBSCAN algorithm is run concurrently on partitions of the Trip Record data. The partitions are created by dividing the geographical area into a grid of NxN. The following figure illustrates the case of a partition made of 4x4 cells (NOTE: In this case, the DBSCAN algorithm would run on 16 concurrent threads):
+In this Go version of the comprehensive project, the [DBSCAN algorithm](https://en.wikipedia.org/wiki/DBSCAN) is run concurrently on partitions of the Trip Record data. The partitions are created by dividing the geographical area into a grid of NxN. The following figure illustrates the case of a partition made of 4x4 cells (NOTE: In this case, the DBSCAN algorithm would run on 16 concurrent threads):
 
 <p align="center">
   <img height="300" src="https://user-images.githubusercontent.com/67518620/155905579-7ba41e0f-f315-4c67-a57b-dbd189e8fffc.png">
 </p>
+
+## How to run
+Make sure [Go](https://go.dev/) is downloaded.
+
+Include the dataset file `yellow_tripdata_2009-01-15_9h_21h_clean.csv` in the same directory as `mainFinal.go`.
+
+Run the file `mainFinal.go` in the command line with `go run mainFinal.go`.
+
 
 ## Implementation
 ### General algorithm (MapReduce pattern)
@@ -17,10 +25,10 @@ The parallel DBSCAN algorithm is based on the [MapReduce pattern](https://en.wik
 
 In other words, the steps are: create partitions, concurrently perform DBSCAN on each partition, merge the partitions to get one big result. However, the 3rd step (merging the partitions step) will not be implemented as we are only interested in the concurrency aspect (step 2) of this Go version of the project. The 3rd step will be implemented in the Prolog version of the project.
 
-NOTE: The 3rd step (Merge/Reduce) is skipped in this implementation. It is implemented in the Prolog version of this project.
+**NOTE:** The 3rd step (Merge/Reduce) is skipped in this implementation. It is implemented in the Prolog version of this project.
 
 ### Experimentation
-This concurrent version of the DBSCAN algorithm is based on the [producer-consumer pattern](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem) (worker pools), specifically the [Single Producer Multiple Consumer variation](https://betterprogramming.pub/hands-on-go-concurrency-the-producer-consumer-pattern-c42aab4e3bd2). The experimentation is carried out with several combinations of different numbers of **partitions** and **consumer threads** in order to observe the optimal solution. A [semaphore](https://en.wikipedia.org/wiki/Semaphore_(programming)#Producer%E2%80%93consumer_problem) structure is implemented to solve the producer-consumer problem.
+This concurrent version of the DBSCAN algorithm is implemented with the [producer-consumer pattern](https://en.wikipedia.org/wiki/Producer%E2%80%93consumer_problem) based on the [thread pool pattern](https://en.wikipedia.org/wiki/Thread_pool), specifically the [Single Producer Multiple Consumer variation](https://betterprogramming.pub/hands-on-go-concurrency-the-producer-consumer-pattern-c42aab4e3bd2). The experimentation is carried out with different **numbers of partitions** and **consumer threads** in order to observe the optimal solution. A [semaphore](https://en.wikipedia.org/wiki/Semaphore_(programming)#Producer%E2%80%93consumer_problem) structure is implemented for the producer-consumer problem.
 
 ### Additional Notes
 The DBSCAN implementation has a restricted minimum point of `GPScoord{-74., 40.7}` and a maximum point of `GPScoord{-73.93, 40.8}`. These coordinates represent the area of downtown Manhattan, NYC.
@@ -200,3 +208,4 @@ Of course, no one can build a project without running into problems. Since I dea
 I learned that the built-in `math.Pow()` function is significantly slower than simply doing `num*num` as the built-in function has additional error checking mechanisms. This modification significantly reduced the execution time by several minutes. 
 
 I also learned that it is much slower to check whether an item is in a slice by writing a `contains()` function than to convert the slice into a map then removing the duplicate keys ([see problem and solution](https://stackoverflow.com/questions/66643946/how-to-remove-duplicates-strings-or-int-from-slice-in-go)).
+
